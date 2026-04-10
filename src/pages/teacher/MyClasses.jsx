@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users } from "lucide-react";
 import { toast } from "sonner";
+import API_URL from "@/config";
 
 export default function MyClasses() {
     const { user } = useAuth();
@@ -13,7 +14,7 @@ export default function MyClasses() {
     useEffect(() => {
         const fetchMyClasses = async () => {
             try {
-                const res = await fetch("/api/classes", {
+                const res = await fetch(`${API_URL}/api/classes`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!res.ok) throw new Error("Failed to fetch classes");
@@ -21,7 +22,7 @@ export default function MyClasses() {
                 
                 // For each class, fetch names of students
                 const enrichedClasses = await Promise.all(data.map(async (cls) => {
-                    const classRes = await fetch(`/api/classes/${cls.classId}`, {
+                    const classRes = await fetch(`${API_URL}/api/classes/${cls.classId}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (classRes.ok) return await classRes.json();

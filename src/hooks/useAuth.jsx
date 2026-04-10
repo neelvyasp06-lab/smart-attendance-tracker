@@ -1,4 +1,6 @@
 import { createContext, useContext, useState } from "react";
+import API_URL from "../config";
+
 const AuthContext = createContext({
     isAuthenticated: false,
     role: null,
@@ -6,15 +8,14 @@ const AuthContext = createContext({
     login: () => { },
     logout: () => { },
 });
+
 export function AuthProvider({ children }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
 
     const login = async (role, email, password) => {
         try {
-            // In a real app, you'd send email/password to the backend
-            // For now, we'll use a simple login API
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, role })
