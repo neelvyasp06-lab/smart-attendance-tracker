@@ -6,20 +6,35 @@ const connectDB = require('./config/db');
 // Load environment variables
 dotenv.config();
 
-// Connect to database
-connectDB();
+// Connect to database (don't await so server starts immediately)
+connectDB().catch(err => console.error("Immediate DB Error:", err));
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*', // Allows all origins, including your Vercel URL
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
+
+
+// Health Check for Render
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        uptime: process.uptime(),
+        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    });
+});
 
 // Logger
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
+
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));

@@ -20,12 +20,28 @@ export default function LoginPage() {
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const res = await login(selectedRole, email, password);
-        if (!res.success) {
-            toast.error(res.message);
+        
+        // Show a "Waking up server" toast if it takes too long
+        const coldStartTimer = setTimeout(() => {
+            toast.info("Server is waking up (Render cold start)... please wait a moment.", {
+                duration: 5000,
+            });
+        }, 3000);
+
+        try {
+            const res = await login(selectedRole, email, password);
+            clearTimeout(coldStartTimer);
+            if (!res.success) {
+                toast.error(res.message);
+            }
+        } catch (err) {
+            clearTimeout(coldStartTimer);
+            toast.error("Failed to connect to server.");
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
+
     return (<div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-muted">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
