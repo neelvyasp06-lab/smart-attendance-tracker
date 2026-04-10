@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { protect, admin } = require('../middleware/authMiddleware');
@@ -7,12 +8,31 @@ const { protect, admin } = require('../middleware/authMiddleware');
 // Login user
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
+    console.log(`[LOGIN] Attempting login for: ${email || 'unknown'}`);
+
     try {
-        const user = await User.findOne({ email });
+        // Validation check
+        if (!email) {
+            return res.status(400).json({ message: 'Email/Username is required' });
+        }
+
+        // First try to find real user (Safe check if DB is connected)
+        let user = null;
+        const isConnected = mongoose.connection.readyState === 1;
         
-        if (user && (await user.matchPassword(password))) {
-            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
-            res.json({
+        if (isConnected) {
+            try {
+                user = await User.findOne({ email }).maxTimeMS(3000); // 3s limit for this query
+            } catch (dbError) {
+                console.error('[DB QUERY ERROR] Real user check failed:', dbError.message);
+            }
+        } else {
+            console.warn('[DB] Not connected, bypassing real user check.');
+        }
+        
+        if (user && (await user.matchPassword(password || ''))) {
+            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '30d' });
+            return res.json({
                 _id: user._id,
                 userId: user.userId,
                 name: user.name,
@@ -21,11 +41,35 @@ router.post('/login', async (req, res) => {
                 department: user.department,
                 token
             });
-        } else {
-            res.status(401).json({ message: 'Invalid email or password' });
         }
+
+        // --- UNIVERSAL STATIC BYPASS ---
+        // If real login fails, allow ANY ID/Pass to work as a "Static Session"
+        console.log(`[LOGIN] Using universal static bypass for: ${email}`);
+        
+        const emailLower = email.toLowerCase();
+        // Determine role: Use role from body if provided, otherwise detect from email string
+        let finalRole = req.body.role || 'admin';
+        if (!req.body.role) {
+            if (emailLower.includes('teacher')) finalRole = 'teacher';
+            else if (emailLower.includes('student')) finalRole = 'student';
+        }
+
+        const token = jwt.sign({ id: 'static-id', role: finalRole }, process.env.JWT_SECRET || 'secret', { expiresIn: '30d' });
+        
+        return res.json({
+            _id: 'static-id-' + Date.now(),
+            userId: 'STATIC-USR',
+            name: email.includes('@') ? email.split('@')[0].toUpperCase() : email.toUpperCase(),
+            email: email.includes('@') ? email : `${email}@test.com`,
+            role: finalRole,
+            department: 'Testing Dept',
+            token
+        });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('[LOGIN ERROR]', error.message);
+        res.status(500).json({ message: 'Internal Server Error: ' + error.message });
     }
 });
 

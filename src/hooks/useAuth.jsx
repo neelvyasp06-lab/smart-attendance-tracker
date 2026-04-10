@@ -30,7 +30,8 @@ export function AuthProvider({ children }) {
                 return { success: false, message: errorData.message };
             }
         } catch (error) {
-            return { success: false, message: "Server error" };
+            console.error('Login error:', error);
+            return { success: false, message: "Connection Error: " + error.message };
         }
     };
 
