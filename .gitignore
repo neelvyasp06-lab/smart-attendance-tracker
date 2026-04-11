@@ -30,3 +30,9 @@ server/.env
 *.njsproj
 *.sln
 *.sw?
+
+backend/.env
+node_modules/
+frontend/dist/
+backend/node_modules/
+.vite/

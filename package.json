@@ -1,11 +1,21 @@
 {
-  "name": "smart-attendance-tracker-root",
+  "name": "smart-attendance-tracker-master",
   "version": "1.0.0",
   "scripts": {
+    "start": "node backend/index.js",
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "npx concurrently \"npm run start-frontend\" \"npm run start-backend\"",
     "start-frontend": "cd frontend && npm run dev",
     "start-backend": "cd backend && npm run dev",
-    "dev": "npx concurrently \"npm run start-frontend\" \"npm run start-backend\"",
     "install-all": "cd frontend && npm install && cd ../backend && npm install"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.4.1"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

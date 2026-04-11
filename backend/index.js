@@ -42,8 +42,23 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/classes', require('./routes/classRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 
+// Support for non-prefixed routes (if Vercel rewrite strips /api)
+app.use('/auth', require('./routes/authRoutes'));
+app.use('/classes', require('./routes/classRoutes'));
+app.use('/attendance', require('./routes/attendanceRoutes'));
+
 app.get('/', (req, res) => {
-    res.send('Smart Attendance Tracker API is running...');
+    res.json({ message: 'Smart Attendance Tracker API is running...', mode: 'production' });
+});
+
+// Final 404 Handler - MUST RETURN JSON, NOT HTML
+app.use((req, res) => {
+    console.error(`[404] Not Found: ${req.method} ${req.url}`);
+    res.status(404).json({ 
+        message: 'Route not found on Backend', 
+        path: req.url,
+        method: req.method 
+    });
 });
 
 const PORT = process.env.PORT || 5000;
